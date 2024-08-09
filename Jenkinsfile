@@ -1,65 +1,21 @@
 pipeline {
     agent any
-
-    // Define parameters
     parameters {
-        string(name: 'BRANCH_NAME', defaultValue: 'main', description: 'Git branch to build')
-        choice(name: 'ENVIRONMENT', choices: ['dev', 'qa', 'prod'], description: 'Environment to deploy to')
-        booleanParam(name: 'RUN_TESTS', defaultValue: true, description: 'Run unit tests?')
+        string(name: 'maven_version', defaultValue: '3.9.3', description: 'pass the version of maven')
+        string(name: 'terraform_version', defaultValue: '0.15.0', description: 'pass the version of maven')		
     }
-
-    environment {
-        BUILD_DIR = 'build'
-    }
-
     stages {
-        stage('Checkout') {
+        stage('download maven') {
             steps {
-                // Checkout the specified branch
-                git branch: "${params.BRANCH_NAME}", url: 'https://github.com/your-repo.git'
+		sh 'cd /var/lib/jenkins/'
+                sh 'sudo wget https://dlcdn.apache.org/maven/maven-3/$maven_version/binaries/apache-maven-$maven_version-bin.tar.gz'
             }
         }
-
-        stage('Build') {
+        stage('download terraform') {
             steps {
-                // Run the build process
-                echo "Building project from branch: ${params.BRANCH_NAME}"
-                sh 'npm install'
-                sh 'npm run build'
+		sh 'cd /opt'
+                sh 'sudo wget  https://releases.hashicorp.com/terraform/$terraform_version/terraform_$terraform_version_linux_amd64.zip'
             }
-        }
-
-        stage('Test') {
-            when {
-                expression { return params.RUN_TESTS }
-            }
-            steps {
-                // Run unit tests if RUN_TESTS is true
-                echo "Running tests..."
-                sh 'npm test'
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                // Deploy to the selected environment
-                echo "Deploying to ${params.ENVIRONMENT} environment..."
-                sh "deploy.sh ${params.ENVIRONMENT}"
-            }
-        }
-    }
-
-    post {
-        always {
-            // Clean up
-            echo "Cleaning up..."
-            deleteDir()
-        }
-        success {
-            echo 'Pipeline succeeded!'
-        }
-        failure {
-            echo 'Pipeline failed!'
-        }
-    }
+        }		
+   }
 }
